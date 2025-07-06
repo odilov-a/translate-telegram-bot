@@ -1,0 +1,24 @@
+{
+  "name": "translate-bot",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon index.js",
+    "start": "node index.js"
+  },
+  "keywords": [
+    "translation",
+    "bot",
+    "telegram",
+    "google-translate"
+  ],
+  "author": "Akbar Odilov",
+  "license": "ISC",
+  "description": "A Telegram bot that translates messages using Google Translate API.",
+  "dependencies": {
+    "crypto": "^1.0.1",
+    "dotenv": "^17.0.1",
+    "google-translate-api-x": "^10.7.2",
+    "node-telegram-bot-api": "^0.63.0"
+  }
+}

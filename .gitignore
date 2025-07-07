@@ -1,6 +1,8 @@
 # Dependency directories
 node_modules/
 
+users.json
+
 .env
 
 # Log files

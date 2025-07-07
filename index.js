@@ -1,6 +1,8 @@
 const TelegramBot = require("node-telegram-bot-api");
 const translate = require("google-translate-api-x");
 const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
 require("dotenv").config();
 
 const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
@@ -8,15 +10,35 @@ const bot = new TelegramBot(process.env.BOT_TOKEN, { polling: true });
 const textStorage = new Map();
 const userSettings = new Map();
 
+const USERS_FILE = path.join(__dirname, "users.json");
+
+function readUsers() {
+  try {
+    const data = fs.readFileSync(USERS_FILE, "utf8");
+    return new Set(JSON.parse(data));
+  } catch (err) {
+    return new Set();
+  }
+}
+
+function addUser(userId) {
+  const users = readUsers();
+  if (!users.has(userId)) {
+    users.add(userId);
+    fs.writeFileSync(USERS_FILE, JSON.stringify([...users], null, 2), "utf8");
+  }
+}
+
+function getUserCount() {
+  return readUsers().size;
+}
+
 bot.onText(/\/start/, (msg) => {
   const name = msg.from.first_name || "foydalanuvchi";
+  addUser(msg.from.id);
   bot.sendMessage(
     msg.chat.id,
-    `👋 Salom, *${name}*!\n\nBu bot sizga matnlarni quyidagi tillar o‘rtasida tez va oson tarjima qilish imkonini beradi:
-    
-🔄 Rus ↔ O‘zbek  
-🔄 Rus ↔ Ingliz  
-🔄 O‘zbek ↔ Ingliz
+    `👋 Salom, *${name}*!\n\nBu bot sizga matnlarni quyidagi tillar o‘rtasida tez va oson tarjima qilish imkonini beradi.
 
 ✍️ Tarjimani boshlash uchun, matn yuboring.
 
@@ -50,12 +72,25 @@ bot.onText(/\/settings/, (msg) => {
   });
 });
 
+bot.onText(/\/stats/, (msg) => {
+  const total = getUserCount();
+  bot.sendMessage(
+    msg.chat.id,
+    `👥 Botdan foydalangan foydalanuvchilar soni: *${total}*`,
+    {
+      parse_mode: "Markdown",
+    }
+  );
+});
+
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const userId = msg.from.id;
   const text = msg.text;
 
   if (text.startsWith("/")) return;
+
+  addUser(userId);
 
   const setting = userSettings.get(userId);
 
@@ -108,6 +143,8 @@ bot.on("callback_query", async (query) => {
   const chatId = query.message.chat.id;
   const userId = query.from.id;
   const data = query.data;
+
+  addUser(userId);
 
   if (data.startsWith("set_")) {
     const value = data.replace("set_", "");
